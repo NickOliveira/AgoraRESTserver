@@ -32,6 +32,25 @@ app.get('/api/offerings/asks' , (req, res) => {
     });
 });
 
+app.get('/api/offerings/asks/:currency', (req, res) => {
+    let databasePath = "TRADES/asks/" + req.params.currency;
+    db.ref(databasePath).on('value', (snapshot) => {
+       res.json(snapshot.val());
+    })
+})
+
+app.get('/api/offerings/bids/:currency', (req, res) => {
+    let databasePath = "TRADES/bids/" + req.params.currency;
+    db.ref(databasePath).on('value', (snapshot) => {
+       res.json(snapshot.val());
+    })
+})
+
+app.get('/api/offerings/asks/:currency/:minMax/:Value', (req,res) => {
+    if(req.params.minMax != "min" && req.params.minMax != "max") {
+        res.json("{}");
+    }
+})
 
 
 
