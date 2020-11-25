@@ -46,12 +46,60 @@ app.get('/api/offerings/bids/:currency', (req, res) => {
     })
 })
 
-app.get('/api/offerings/asks/:currency/:minMax/:Value', (req,res) => {
-    if(req.params.minMax != "min" && req.params.minMax != "max") {
-        res.json("{}");
-    }
-})
 
+//relates to user searching how much they can buy of each crypto from different exchanges
+//with respect to their current budget
+app.get('/api/offerings/asks/budget/:currency/:value', (req,res) => {
+    //strating path for the database
+    let databasePath = "TRADES/asks/" + req.params.currency;
+    //empty output json object
+    let jsonOutput = `{"offerings": []}`;
+    //allows us to add smaller json objects to offerings array in output
+    var output = JSON.parse(jsonOutput);
+    //order children by price so we can compare with budget constraint
+    db.ref(databasePath).on('value', (snapshot) => {
+            let result = snapshot.val();
+            
+            //for each exchange offered
+            for(exchange in result) {                       
+                
+                //for each crypto offered in the exchange
+                for(crypto in result[exchange]) {
+                    let budget = req.params.value;     
+                    
+                    let offerings = result[exchange][crypto];                    
+                    let i = 0;
+                    let amount = 0;
+
+                    while(budget > 0) {
+                        let offeringCost = parseFloat(offerings[i].price);
+                        let offeringSize = parseFloat(offerings[i].size);
+                        if(budget < offeringCost) {
+                            let ratio = budget / offeringCost;
+                            budget -= offeringCost;
+                            amount += offeringSize * ratio;
+
+                        } else {
+                            budget -= offeringCost;
+                            amount += offeringSize;
+                        }
+                    }
+
+                    output['offerings'].push(
+                        { 
+                            "name": exchange, 
+                            "crypto" : crypto,
+                            "amount": amount,
+                            "currency": req.params.currency,
+                            "price" : req.params.value
+                        });
+                }                
+               
+            }
+           res.json(output);
+
+    })
+})
 
 
 
