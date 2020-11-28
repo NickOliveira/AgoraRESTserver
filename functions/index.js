@@ -126,7 +126,7 @@ app.get('/api/offerings/bids/budget/:currency/:amount', (req, res) => {
               //for each crypto offered in the exchange
               for(crypto in result[exchange]) {
                   let budget = req.params.amount;  
-                  console.log(budget); 
+                  //console.log(budget); 
                   
                   const offerings = result[exchange][crypto];                               
                   let i = 0;
@@ -166,6 +166,20 @@ app.get('/api/offerings/bids/budget/:currency/:amount', (req, res) => {
          res.json(output);
 
   })
+})
+
+app.get("/api/offerings/bids/marketDepth/:currency/:exchange/:cryptoCurrency", (req, res) => {
+    const databasePath = "TRADES/bids/" + req.params.currency + "/" + req.params.exchange + "/" + req.params.cryptoCurrency;
+    db.ref(databasePath).on('value', (snapshot) => {
+        res.json(snapshot.val());
+    })
+})
+
+app.get("/api/offerings/asks/marketDepth/:currency/:exchange/:cryptoCurrency", (req, res) => {
+    const databasePath = "TRADES/asks/" + req.params.currency + "/" + req.params.exchange + "/" + req.params.cryptoCurrency;
+    db.ref(databasePath).on('value', (snapshot) => {
+        res.json(snapshot.val());
+    })
 })
 
 
