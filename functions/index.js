@@ -168,6 +168,115 @@ app.get('/api/offerings/bids/budget/:currency/:amount', (req, res) => {
   })
 })
 
+
+app.get("/api/offerings/asks/pair/:cryptoCurrency/:currency/:amount", (req, res) => {
+
+    //strating path for the database
+    const databasePath = "TRADES/asks/" + req.params.currency;
+    //empty output json object
+    let jsonOutput = `{"offerings": []}`;
+    //allows us to add smaller json objects to offerings array in output
+    let output = JSON.parse(jsonOutput);
+    //order children by price so we can compare with budget constraint
+    db.ref(databasePath).on('value', (snapshot) => {
+            let result = snapshot.val();
+            
+            //for each exchange offered
+            for(exchange in result) {                       
+                
+                let amount = req.params.amount;  
+                //console.log(budget); 
+                
+                const offerings = result[exchange][req.params.cryptoCurrency];                               
+                let i = 0;
+                let cost = 0;
+                //console.log(offerings[0])
+                while(amount > 0) {
+                    let offering = offerings[i++];                    
+                    const offeringCost = parseFloat(offering.price);
+                    const offeringSize = parseFloat(offering.size);
+  
+                    //console.log(offeringCost + " X " + offeringSize);
+                    
+                    //if we need to take a fraction of the offering
+                    //console.log("Cost for " + exchange + " at " + crypto + ":" + (offeringCost*offeringSize));
+                    if(amount < offeringSize) {
+                        let ratio = amount / offeringSize;
+                        cost += offeringCost * amount;
+                        amount = 0;                         
+                    } else {
+                        amount -= offeringSize;
+                        cost += offeringCost*offeringSize;
+                    }
+                } 
+  
+                output['offerings'].push(
+                    { 
+                        "Exchange": exchange, 
+                        "CryptoCurrency" : req.params.cryptoCurrency,
+                        "Amount": req.params.amount,
+                        "Currency": req.params.currency,
+                        "Price" : cost
+                    });         
+               
+            }
+           res.json(output);
+    })
+})
+
+app.get('/api/offerings/bids/pair/:cryptoCurrency/:currency/:amount', (req, res) => {
+    let databasePath = "TRADES/bids/" + req.params.currency;
+    
+    let jsonOutput = `{"offerings": []}`;
+    //allows us to add smaller json objects to offerings array in output
+    let output = JSON.parse(jsonOutput);
+    //order children by price so we can compare with budget constraint
+    db.ref(databasePath).on('value', (snapshot) => {
+            let result = snapshot.val();
+          
+            //for each exchange offered
+            for(exchange in result) {                       
+                
+                let amount = req.params.amount;  
+                //console.log(budget); 
+                
+                const offerings = result[exchange][req.params.cryptoCurrency];                               
+                let i = 0;
+                let cost = 0;
+                //console.log(offerings[0])
+                while(amount > 0) {
+                    let offering = offerings[i++];                    
+                    const offeringCost = parseFloat(offering.price);
+                    const offeringSize = parseFloat(offering.size);
+  
+                    //console.log(offeringCost + " X " + offeringSize);
+                    
+                    //if we need to take a fraction of the offering
+                    //console.log("Cost for " + exchange + " at " + crypto + ":" + (offeringCost*offeringSize));
+                    if(amount < offeringSize) {
+                        let ratio = amount / offeringSize;
+                        cost += offeringCost * amount;
+                        amount = 0;                         
+                    } else {
+                        amount -= offeringSize;
+                        cost += offeringCost*offeringSize;
+                    }
+                } 
+  
+                output['offerings'].push(
+                    { 
+                        "Exchange": exchange, 
+                        "CryptoCurrency" : req.params.cryptoCurrency,
+                        "Amount": req.params.amount,
+                        "Currency": req.params.currency,
+                        "Price" : cost
+                    });         
+               
+            }
+            res.json(output);
+    })
+})
+
 app.get("/api/offerings/bids/marketDepth/:currency/:exchange/:cryptoCurrency", (req, res) => {
     const databasePath = "TRADES/bids/" + req.params.currency + "/" + req.params.exchange + "/" + req.params.cryptoCurrency;
     db.ref(databasePath).on('value', (snapshot) => {
